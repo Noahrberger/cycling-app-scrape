@@ -68,7 +68,7 @@ const router = useRouter();
  
 onPress={() =>
   router.push({
-    pathname: "/teams/[teamId]",
+    pathname: "/teams-detail/[teamId]",
     params: {
       teamId: String(item.id),
       teamName: String(item.name),

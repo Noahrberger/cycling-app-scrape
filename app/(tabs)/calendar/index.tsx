@@ -117,8 +117,12 @@ export default function CalendarScreen() {
         renderItem={({ item }) => (
   <RaceRow
     race={item}
-    onPress={() => router.push({ pathname: "/(tabs)/calendar/[raceId]", params: { raceId: item.id } })}
-
+  onPress={() =>
+  router.push({
+    pathname: "/races/[raceId]",
+    params: { raceId: item.id },
+  })
+}
   />
 )}
 
