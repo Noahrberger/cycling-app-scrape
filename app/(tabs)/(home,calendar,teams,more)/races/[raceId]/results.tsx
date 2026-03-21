@@ -1,13 +1,13 @@
 // app/(tabs)/calendar/[raceId]/results.tsx
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type ResultCategory = "stage" | "gc" | "points" | "kom" | "youth" | "team";
@@ -21,15 +21,17 @@ type StageOption = {
 type ResultRow =
   | {
       id: string;
+      riderId?: string;
       rank: number;
       riderName: string;
       teamName?: string;
       unit: "time";
-      totalTime?: string; // leader only
-      gap?: string; // non-leaders only (e.g. "+0:32")
+      totalTime?: string;
+      gap?: string;
     }
   | {
       id: string;
+      riderId?: string;
       rank: number;
       riderName: string;
       teamName?: string;
@@ -38,6 +40,7 @@ type ResultRow =
     };
 
 export default function ResultsScreen() {
+    const router = useRouter();
   const { raceId } = useLocalSearchParams<{ raceId: string }>();
   const id = String(raceId ?? "");
 
@@ -102,18 +105,19 @@ export default function ResultsScreen() {
 
     // Basic mock “base riders”
     const riders = [
-      { name: "Jonas Vingegaard", team: "Visma" },
-      { name: "Tadej Pogačar", team: "UAE" },
-      { name: "Remco Evenepoel", team: "Soudal" },
-      { name: "Primož Roglič", team: "Bora" },
-      { name: "Carlos Rodríguez", team: "Ineos" },
+      { riderId: "jonas-vingegaard", name: "Jonas Vingegaard", team: "Visma" },
+      { riderId: "tadej-pogacar", name: "Tadej Pogačar", team: "UAE" },
+      { riderId: "remco-evenepoel", name: "Remco Evenepoel", team: "Soudal" },
+      { riderId: "primoz-roglic", name: "Primož Roglič", team: "Bora" },
+      { riderId: "carlos-rodriguez", name: "Carlos Rodríguez", team: "Ineos" },
     ];
 
     // helper: make time classification for a given stage key
-    const makeTimeClassification = (prefix: string, leaderTime: string) => {
+     const makeTimeClassification = (prefix: string, leaderTime: string) => {
       const rows: ResultRow[] = [
         {
           id: `${prefix}-1`,
+          riderId: riders[0].riderId,
           rank: 1,
           riderName: riders[0].name,
           teamName: riders[0].team,
@@ -122,6 +126,7 @@ export default function ResultsScreen() {
         },
         {
           id: `${prefix}-2`,
+          riderId: riders[1].riderId,
           rank: 2,
           riderName: riders[1].name,
           teamName: riders[1].team,
@@ -130,6 +135,7 @@ export default function ResultsScreen() {
         },
         {
           id: `${prefix}-3`,
+          riderId: riders[2].riderId,
           rank: 3,
           riderName: riders[2].name,
           teamName: riders[2].team,
@@ -138,6 +144,7 @@ export default function ResultsScreen() {
         },
         {
           id: `${prefix}-4`,
+          riderId: riders[3].riderId,
           rank: 4,
           riderName: riders[3].name,
           teamName: riders[3].team,
@@ -146,6 +153,7 @@ export default function ResultsScreen() {
         },
         {
           id: `${prefix}-5`,
+          riderId: riders[4].riderId,
           rank: 5,
           riderName: riders[4].name,
           teamName: riders[4].team,
@@ -204,29 +212,32 @@ export default function ResultsScreen() {
     };
 
     // helper: stage result (time) for a stage
-    const makeStageResult = (prefix: string) => {
+       const makeStageResult = (prefix: string) => {
       const rows: ResultRow[] = [
         {
           id: `${prefix}-1`,
+          riderId: riders[0].riderId,
           rank: 1,
-          riderName: "Stage Winner",
-          teamName: "Team X",
+          riderName: riders[0].name,
+          teamName: riders[0].team,
           unit: "time",
           totalTime: "4:12:03",
         },
         {
           id: `${prefix}-2`,
+          riderId: riders[1].riderId,
           rank: 2,
-          riderName: "Second Rider",
-          teamName: "Team Y",
+          riderName: riders[1].name,
+          teamName: riders[1].team,
           unit: "time",
           gap: "+0:03",
         },
         {
           id: `${prefix}-3`,
+          riderId: riders[2].riderId,
           rank: 3,
-          riderName: "Third Rider",
-          teamName: "Team Z",
+          riderName: riders[2].name,
+          teamName: riders[2].team,
           unit: "time",
           gap: "+0:08",
         },
@@ -300,8 +311,8 @@ export default function ResultsScreen() {
 
     const rightLabel = item.unit === "points" ? "pts" : "";
 
-    return (
-      <View key={item.id}>
+    const content = (
+      <>
         <View style={styles.row}>
           <Text style={styles.rank}>{item.rank}</Text>
 
@@ -325,7 +336,25 @@ export default function ResultsScreen() {
         </View>
 
         <View style={styles.separator} />
-      </View>
+      </>
+    );
+
+    if (!item.riderId) {
+      return <View key={item.id}>{content}</View>;
+    }
+
+    return (
+      <Pressable
+        key={item.id}
+        onPress={() =>
+          router.push({
+            pathname: "/riders/[riderId]",
+            params: { riderId: item.riderId! },
+          })
+        }
+      >
+        {content}
+      </Pressable>
     );
   };
 

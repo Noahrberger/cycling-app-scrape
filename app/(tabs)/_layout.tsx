@@ -17,8 +17,9 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}
     >
+      {/* Synlige tabs */}
       <Tabs.Screen
-        name="home/index"
+        name="(home)"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
@@ -28,7 +29,13 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="teams/index"
+        name="teams"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="(teams)"
         options={{
           title: "Teams",
           tabBarIcon: ({ color }) => (
@@ -38,7 +45,13 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="calendar/index"
+        name="calendar"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="(calendar)"
         options={{
           title: "Calendar",
           tabBarIcon: ({ color }) => (
@@ -48,12 +61,25 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="more/index"
+        name="more"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="(more)"
         options={{
           title: "More",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="ellipsis.circle.fill" color={color} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="home"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
