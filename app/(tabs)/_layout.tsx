@@ -18,7 +18,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="home/index"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
@@ -28,7 +28,7 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="teams"
+        name="teams/index"
         options={{
           title: "Teams",
           tabBarIcon: ({ color }) => (
@@ -38,18 +38,17 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-  name="calendar"
-  options={{
-    title: "Calendar",
-    tabBarIcon: ({ color }) => (
-      <IconSymbol size={28} name="calendar" color={color} />
-    ),
-  }}
-/>
-
+        name="calendar/index"
+        options={{
+          title: "Calendar",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="calendar" color={color} />
+          ),
+        }}
+      />
 
       <Tabs.Screen
-        name="more"
+        name="more/index"
         options={{
           title: "More",
           tabBarIcon: ({ color }) => (
@@ -57,13 +56,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
-
-     
-      {/* Når du lager race-details senere */}
-      {/* <Tabs.Screen name="calendar/tour-de-france" options={{ href: null }} /> */}
-      {/* eller dynamisk: */}
-      {/* <Tabs.Screen name="calendar/[raceId]" options={{ href: null }} /> */}
     </Tabs>
   );
 }

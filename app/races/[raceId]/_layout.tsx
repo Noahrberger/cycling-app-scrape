@@ -21,30 +21,30 @@ export default function RaceLayout() {
     return "overview";
   }, [pathname]);
 
-  const goTab = (tab: TabKey) => {
+ const goTab = (tab: TabKey) => {
   if (tab === "overview") {
-    router.push({
+    router.replace({
       pathname: "/races/[raceId]",
       params: { raceId: id },
     });
   }
 
   if (tab === "stages") {
-    router.push({
+    router.replace({
       pathname: "/races/[raceId]/stages",
       params: { raceId: id },
     });
   }
 
   if (tab === "startlist") {
-    router.push({
+    router.replace({
       pathname: "/races/[raceId]/startlist",
       params: { raceId: id },
     });
   }
 
   if (tab === "results") {
-    router.push({
+    router.replace({
       pathname: "/races/[raceId]/results",
       params: { raceId: id },
     });

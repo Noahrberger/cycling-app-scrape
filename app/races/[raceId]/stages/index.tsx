@@ -1,11 +1,11 @@
 // app/(tabs)/calendar/[raceId]/stages/index.tsx
 import {
-    formatShort,
-    getRaceById,
-    getStagesForRace,
-    parseDate,
-    RaceDetails,
-    Stage,
+  formatShort,
+  getRaceById,
+  getStagesForRace,
+  parseDate,
+  RaceDetails,
+  Stage,
 } from "@/store/raceStore";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo } from "react";
@@ -40,8 +40,8 @@ export default function StagesListScreen() {
       {stages.map((stage) => (
         <Pressable
           key={`stage-${stage.stageNumber}`}
-          onPress={() =>
-  router.push({
+   onPress={() =>
+  router.replace({
     pathname: "/races/[raceId]/stages/[stagenumber]",
     params: {
       raceId: id,

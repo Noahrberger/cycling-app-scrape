@@ -1,3 +1,7 @@
+import {
+  getUpcomingRacesForTeam,
+  type UpcomingRace,
+} from "@/store/teamUpcomingRaces";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -19,6 +23,9 @@ export default function TeamDetailScreen() {
     () => (teamName ?? teamId ?? "Team").toString(),
     [teamName, teamId]
   );
+  const upcomingRaces = useMemo<UpcomingRace[]>(() => {
+    return getUpcomingRacesForTeam(String(teamId ?? ""));
+  }, [teamId]);
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -54,46 +61,62 @@ export default function TeamDetailScreen() {
 
       {/* Content */}
       <View style={styles.content}>
-      {activeTab === "riders" && (
-  <>
-    <Text style={styles.sectionTitle}>Riders</Text>
+        {activeTab === "riders" && (
+          <>
+            <Text style={styles.sectionTitle}>Riders</Text>
 
-    
- 
-<Pressable
-  onPress={() =>
-    router.push({
-      pathname: "/riders/[riderId]",
-      params: {
-        riderId: "jonas-vingegaard",
-      },
-    })
-  }
-  style={{
-    marginTop: 12,
-    padding: 14,
-    borderRadius: 14,
-    backgroundColor: "#F2F2F2",
-  }}
->
-  <Text style={{ fontWeight: "900", color: "#111111" }}>
-    Jonas Vingegaard
-  </Text>
-  <Text style={{ marginTop: 4, color: "#666666" }}>
-    GC • Denmark
-  </Text>
-</Pressable>
-
-  </>
-)}
-
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/riders/[riderId]",
+                  params: {
+                    riderId: "jonas-vingegaard",
+                  },
+                })
+              }
+              style={{
+                marginTop: 12,
+                padding: 14,
+                borderRadius: 14,
+                backgroundColor: "#F2F2F2",
+              }}
+            >
+              <Text style={{ fontWeight: "900", color: "#111111" }}>
+                Jonas Vingegaard
+              </Text>
+              <Text style={{ marginTop: 4, color: "#666666" }}>
+                GC • Denmark
+              </Text>
+            </Pressable>
+          </>
+        )}
 
         {activeTab === "upcoming" && (
           <>
             <Text style={styles.sectionTitle}>Upcoming races</Text>
-            <Text style={styles.note}>
-              Her kommer kommende ritt. (teamId: {teamId})
-            </Text>
+
+            {upcomingRaces.length === 0 ? (
+              <Text style={styles.note}>No upcoming races yet.</Text>
+            ) : (
+              upcomingRaces.map((race) => (
+                <Pressable
+                  key={race.id}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/races/[raceId]",
+                      params: { raceId: race.id },
+                    })
+                  }
+                  style={styles.raceCard}
+                >
+                  <Text style={styles.raceName}>{race.name}</Text>
+                  <Text style={styles.raceMeta}>{race.date}</Text>
+                  {race.category ? (
+                    <Text style={styles.raceMeta}>{race.category}</Text>
+                  ) : null}
+                </Pressable>
+              ))
+            )}
           </>
         )}
 
@@ -179,4 +202,20 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16, paddingTop: 14 },
   sectionTitle: { fontSize: 16, fontWeight: "800", color: "#111111" },
   note: { marginTop: 8, color: "#666666", lineHeight: 20 },
+
+  raceCard: {
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: "#F2F2F2",
+  },
+  raceName: {
+    fontWeight: "900",
+    fontSize: 16,
+    color: "#111111",
+  },
+  raceMeta: {
+    marginTop: 4,
+    color: "#666666",
+  },
 });
