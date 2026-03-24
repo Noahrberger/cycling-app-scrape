@@ -1,10 +1,16 @@
 import RaceHero from "@/components/RaceHero";
-import { getRaceById, RaceDetails } from "@/store/raceStore";
+import { getRace } from "@/services/raceService";
+import type { RaceDetails } from "@/store/raceStore";
 import { Slot, useLocalSearchParams, usePathname, useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 type TabKey = "overview" | "stages" | "startlist" | "results";
+
+type LoadState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; data: RaceDetails };
 
 export default function RaceLayout() {
   const router = useRouter();
@@ -12,7 +18,31 @@ export default function RaceLayout() {
   const { raceId } = useLocalSearchParams<{ raceId: string }>();
   const id = String(raceId ?? "");
 
-  const race = useMemo<RaceDetails | null>(() => getRaceById(id), [id]);
+  const [state, setState] = useState<LoadState>({ status: "loading" });
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadRace() {
+      setState({ status: "loading" });
+      const res = await getRace(id);
+
+      if (!mounted) return;
+
+      if (!res.ok) {
+        setState({ status: "error", message: res.error });
+        return;
+      }
+
+      setState({ status: "ready", data: res.data });
+    }
+
+    loadRace();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
 
   const activeTab: TabKey = useMemo(() => {
     if (pathname.includes("/stages")) return "stages";
@@ -21,35 +51,37 @@ export default function RaceLayout() {
     return "overview";
   }, [pathname]);
 
- const goTab = (tab: TabKey) => {
-  if (tab === "overview") {
-    router.replace({
-      pathname: "/races/[raceId]",
-      params: { raceId: id },
-    });
-  }
+  const goTab = (tab: TabKey) => {
+    if (tab === "overview") {
+      router.replace({
+        pathname: "/races/[raceId]",
+        params: { raceId: id },
+      });
+    }
 
-  if (tab === "stages") {
-    router.replace({
-      pathname: "/races/[raceId]/stages",
-      params: { raceId: id },
-    });
-  }
+    if (tab === "stages") {
+      router.replace({
+        pathname: "/races/[raceId]/stages",
+        params: { raceId: id },
+      });
+    }
 
-  if (tab === "startlist") {
-    router.replace({
-      pathname: "/races/[raceId]/startlist",
-      params: { raceId: id },
-    });
-  }
+    if (tab === "startlist") {
+      router.replace({
+        pathname: "/races/[raceId]/startlist",
+        params: { raceId: id },
+      });
+    }
 
-  if (tab === "results") {
-    router.replace({
-      pathname: "/races/[raceId]/results",
-      params: { raceId: id },
-    });
-  }
-};
+    if (tab === "results") {
+      router.replace({
+        pathname: "/races/[raceId]/results",
+        params: { raceId: id },
+      });
+    }
+  };
+
+  const race = state.status === "ready" ? state.data : null;
 
   return (
     <View style={styles.screen}>
@@ -65,14 +97,18 @@ export default function RaceLayout() {
         stickyHeaderIndices={[1]}
         keyboardShouldPersistTaps="handled"
       >
-        {race ? (
-          <RaceHero race={race} />
-        ) : (
+        {state.status === "loading" ? (
+          <View style={styles.notFoundBox}>
+            <Text style={styles.notFoundTitle}>Loading race...</Text>
+          </View>
+        ) : state.status === "error" ? (
           <View style={styles.notFoundBox}>
             <Text style={styles.notFoundTitle}>No race found</Text>
-            <Text style={styles.notFoundText}>id: {id}</Text>
+            <Text style={styles.notFoundText}>{state.message}</Text>
           </View>
-        )}
+        ) : race ? (
+          <RaceHero race={race} />
+        ) : null}
 
         <View style={styles.tabsSticky}>
           <ScrollView

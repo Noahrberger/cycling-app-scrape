@@ -1,6 +1,6 @@
 // app/(tabs)/calendar/[raceId]/results.tsx
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -10,47 +10,59 @@ import {
   View,
 } from "react-native";
 
-type ResultCategory = "stage" | "gc" | "points" | "kom" | "youth" | "team";
-type ResultUnit = "time" | "points";
-
-type StageOption = {
-  stageNumber: number;
-  label: string;
-};
-
-type ResultRow =
-  | {
-      id: string;
-      riderId?: string;
-      rank: number;
-      riderName: string;
-      teamName?: string;
-      unit: "time";
-      totalTime?: string;
-      gap?: string;
-    }
-  | {
-      id: string;
-      riderId?: string;
-      rank: number;
-      riderName: string;
-      teamName?: string;
-      unit: "points";
-      points: number;
-    };
+import type {
+  ResultCategory,
+  ResultRow,
+  ResultUnit,
+  ResultsData,
+  StageOption,
+} from "@/fixtures/results";
+import { getResults } from "@/services/raceService";
 
 export default function ResultsScreen() {
-    const router = useRouter();
+  const router = useRouter();
   const { raceId } = useLocalSearchParams<{ raceId: string }>();
   const id = String(raceId ?? "");
 
-  const [selectedCategory, setSelectedCategory] = useState<ResultCategory>("gc");
+  const [resultsData, setResultsData] = useState<ResultsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // null = "Latest/Overall (end of race so far)"
+  const [selectedCategory, setSelectedCategory] =
+    useState<ResultCategory>("gc");
+
+  // null = "Latest"
   const [selectedStageNumber, setSelectedStageNumber] = useState<number | null>(
     null
   );
   const [stageMenuOpen, setStageMenuOpen] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadResults() {
+      setLoading(true);
+      setError(null);
+
+      const result = await getResults(id);
+
+      if (!mounted) return;
+
+      if (result.ok) {
+        setResultsData(result.data);
+      } else {
+        setError(result.error);
+      }
+
+      setLoading(false);
+    }
+
+    loadResults();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
 
   const categories: { key: ResultCategory; label: string; unit: ResultUnit }[] =
     [
@@ -74,213 +86,14 @@ export default function ResultsScreen() {
     return m;
   }, []);
 
-  /**
-   * STAGES (mock)
-   * Senere: hent fra API: GET /races/:raceId/stages
-   */
-  const stageOptions: StageOption[] = useMemo(() => {
-    // Mock: 10 etapper
-    const count = 10;
-    return Array.from({ length: count }, (_, i) => ({
-      stageNumber: i + 1,
-      label: `Stage ${i + 1}`,
-    }));
-  }, []);
+  const stageOptions: StageOption[] = resultsData?.stageOptions ?? [];
+  const resultsByStageAndCategory =
+    resultsData?.resultsByStageAndCategory ?? {};
 
-  /**
-   * RESULTS (mock)
-   * Senere: hent fra API med params:
-   * - raceId
-   * - stageNumber (null = latest)
-   * - category
-   *
-   * Eksempel:
-   * GET /races/:raceId/results?category=gc&stageNumber=4
-   */
-  const resultsByStageAndCategory = useMemo(() => {
-    const latestKey = "latest";
+  const stageKey =
+    selectedStageNumber == null ? "latest" : String(selectedStageNumber);
 
-    const stageKeys = stageOptions.map((s) => String(s.stageNumber));
-    const keys = [latestKey, ...stageKeys];
-
-    // Basic mock “base riders”
-    const riders = [
-      { riderId: "jonas-vingegaard", name: "Jonas Vingegaard", team: "Visma" },
-      { riderId: "tadej-pogacar", name: "Tadej Pogačar", team: "UAE" },
-      { riderId: "remco-evenepoel", name: "Remco Evenepoel", team: "Soudal" },
-      { riderId: "primoz-roglic", name: "Primož Roglič", team: "Bora" },
-      { riderId: "carlos-rodriguez", name: "Carlos Rodríguez", team: "Ineos" },
-    ];
-
-    // helper: make time classification for a given stage key
-     const makeTimeClassification = (prefix: string, leaderTime: string) => {
-      const rows: ResultRow[] = [
-        {
-          id: `${prefix}-1`,
-          riderId: riders[0].riderId,
-          rank: 1,
-          riderName: riders[0].name,
-          teamName: riders[0].team,
-          unit: "time",
-          totalTime: leaderTime,
-        },
-        {
-          id: `${prefix}-2`,
-          riderId: riders[1].riderId,
-          rank: 2,
-          riderName: riders[1].name,
-          teamName: riders[1].team,
-          unit: "time",
-          gap: "+0:32",
-        },
-        {
-          id: `${prefix}-3`,
-          riderId: riders[2].riderId,
-          rank: 3,
-          riderName: riders[2].name,
-          teamName: riders[2].team,
-          unit: "time",
-          gap: "+1:05",
-        },
-        {
-          id: `${prefix}-4`,
-          riderId: riders[3].riderId,
-          rank: 4,
-          riderName: riders[3].name,
-          teamName: riders[3].team,
-          unit: "time",
-          gap: "+1:44",
-        },
-        {
-          id: `${prefix}-5`,
-          riderId: riders[4].riderId,
-          rank: 5,
-          riderName: riders[4].name,
-          teamName: riders[4].team,
-          unit: "time",
-          gap: "+2:10",
-        },
-      ];
-      return rows;
-    };
-
-    // helper: points classification
-    const makePointsClassification = (prefix: string, base: number) => {
-      const rows: ResultRow[] = [
-        {
-          id: `${prefix}-1`,
-          rank: 1,
-          riderName: "Sprinter A",
-          teamName: "Team P",
-          unit: "points",
-          points: base + 30,
-        },
-        {
-          id: `${prefix}-2`,
-          rank: 2,
-          riderName: "Sprinter B",
-          teamName: "Team Q",
-          unit: "points",
-          points: base + 22,
-        },
-        {
-          id: `${prefix}-3`,
-          rank: 3,
-          riderName: "Sprinter C",
-          teamName: "Team R",
-          unit: "points",
-          points: base + 18,
-        },
-        {
-          id: `${prefix}-4`,
-          rank: 4,
-          riderName: "Sprinter D",
-          teamName: "Team S",
-          unit: "points",
-          points: base + 12,
-        },
-        {
-          id: `${prefix}-5`,
-          rank: 5,
-          riderName: "Sprinter E",
-          teamName: "Team T",
-          unit: "points",
-          points: base + 9,
-        },
-      ];
-      return rows;
-    };
-
-    // helper: stage result (time) for a stage
-       const makeStageResult = (prefix: string) => {
-      const rows: ResultRow[] = [
-        {
-          id: `${prefix}-1`,
-          riderId: riders[0].riderId,
-          rank: 1,
-          riderName: riders[0].name,
-          teamName: riders[0].team,
-          unit: "time",
-          totalTime: "4:12:03",
-        },
-        {
-          id: `${prefix}-2`,
-          riderId: riders[1].riderId,
-          rank: 2,
-          riderName: riders[1].name,
-          teamName: riders[1].team,
-          unit: "time",
-          gap: "+0:03",
-        },
-        {
-          id: `${prefix}-3`,
-          riderId: riders[2].riderId,
-          rank: 3,
-          riderName: riders[2].name,
-          teamName: riders[2].team,
-          unit: "time",
-          gap: "+0:08",
-        },
-      ];
-      return rows;
-    };
-
-    const store: Record<
-      string,
-      Record<ResultCategory, ResultRow[]>
-    > = {};
-
-    keys.forEach((k) => {
-      const stageN = k === latestKey ? null : Number(k);
-
-      // small variation by stage for demo
-      const timeLeader =
-        stageN == null
-          ? "18:42:11"
-          : `0${stageN}:4${stageN}:1${stageN}`; // silly mock
-
-      const pointsBase = stageN == null ? 120 : 40 + stageN * 5;
-
-      store[k] = {
-        stage:
-          stageN == null
-            ? makeStageResult(`stage-${k}`) // latest: show last stage-ish placeholder
-            : makeStageResult(`stage-${k}`),
-
-        gc: makeTimeClassification(`gc-${k}`, timeLeader),
-        youth: makeTimeClassification(`youth-${k}`, timeLeader),
-        team: makeTimeClassification(`team-${k}`, `56:12:${stageN ?? 30}`),
-
-        points: makePointsClassification(`points-${k}`, pointsBase),
-        kom: makePointsClassification(`kom-${k}`, Math.floor(pointsBase / 2)),
-      };
-    });
-
-    return store;
-  }, [stageOptions]);
-
-  const stageKey = selectedStageNumber == null ? "latest" : String(selectedStageNumber);
-  const data = resultsByStageAndCategory[stageKey][selectedCategory];
+  const data = resultsByStageAndCategory[stageKey]?.[selectedCategory] ?? [];
   const selectedUnit = unitByCategory[selectedCategory];
 
   const stageLabel = useMemo(() => {
@@ -289,7 +102,10 @@ export default function ResultsScreen() {
   }, [selectedStageNumber]);
 
   const metaText = useMemo(() => {
-    const scope = selectedStageNumber == null ? "latest" : `after Stage ${selectedStageNumber}`;
+    const scope =
+      selectedStageNumber == null
+        ? "latest"
+        : `after Stage ${selectedStageNumber}`;
 
     if (selectedCategory === "stage") {
       return selectedStageNumber == null
@@ -297,7 +113,10 @@ export default function ResultsScreen() {
         : `Stage result · Stage ${selectedStageNumber}`;
     }
 
-    if (selectedUnit === "time") return `GC-style · Leader total · Others +gap · (${scope})`;
+    if (selectedUnit === "time") {
+      return `GC-style · Leader total · Others +gap · (${scope})`;
+    }
+
     return `Points-style · Everyone points · (${scope})`;
   }, [selectedCategory, selectedStageNumber, selectedUnit]);
 
@@ -358,9 +177,24 @@ export default function ResultsScreen() {
     );
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.statusText}>Loading results...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.statusText}>Error: {error}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Stage dropdown (small) */}
       <View style={styles.topRow}>
         <Text style={styles.topTitle}>Results</Text>
 
@@ -370,7 +204,9 @@ export default function ResultsScreen() {
             style={styles.stagePickerButton}
           >
             <Text style={styles.stagePickerText}>{stageLabel}</Text>
-            <Text style={styles.stagePickerChevron}>{stageMenuOpen ? "▲" : "▼"}</Text>
+            <Text style={styles.stagePickerChevron}>
+              {stageMenuOpen ? "▲" : "▼"}
+            </Text>
           </Pressable>
 
           {stageMenuOpen && (
@@ -402,7 +238,6 @@ export default function ResultsScreen() {
         </View>
       </View>
 
-      {/* Category bar */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -440,6 +275,14 @@ export default function ResultsScreen() {
 const styles = StyleSheet.create({
   container: {
     paddingBottom: 40,
+  },
+
+  statusText: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#111111",
   },
 
   topRow: {

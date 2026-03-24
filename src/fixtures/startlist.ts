@@ -1,4 +1,4 @@
-// app/(tabs)/calendar/fixtures/startlist.ts
+
 
 export type StartlistRider = {
   id: string;
@@ -20,29 +20,42 @@ export type StartlistData = {
 };
 
 // Enkel mock. Senere kommer dette fra API.
-export function getMockStartlist(raceId: string): StartlistData {
-  return {
-    raceId,
+const MOCK_STARTLISTS_BY_RACE_ID: Record<string, StartlistData> = {
+  "tour-de-france": {
+    raceId: "tour-de-france",
     lastUpdatedISO: new Date().toISOString(),
     teams: [
       {
-        id: "team-1",
-        name: "Team Alpha",
+        id: "visma",
+        name: "Visma | Lease a Bike",
         riders: [
-          { id: "r1", name: "Rider One", countryCode: "NO", role: "Leader" },
-          { id: "r2", name: "Rider Two", countryCode: "DK", role: "Sprinter" },
-          { id: "r3", name: "Rider Three", countryCode: "SE", role: "Domestique" },
-        ],
-      },
-      {
-        id: "team-2",
-        name: "Team Bravo",
-        riders: [
-          { id: "r4", name: "Rider Four", countryCode: "FR", role: "Climber" },
-          { id: "r5", name: "Rider Five", countryCode: "BE", role: "Domestique" },
-          { id: "r6", name: "Rider Six", countryCode: "NL", role: "Sprinter" },
+          { id: "jonas-vingegaard", name: "Jonas Vingegaard", countryCode: "DK", role: "Leader" },
         ],
       },
     ],
-  };
+  },
+
+  "giro-ditalia": {
+    raceId: "giro-ditalia",
+    lastUpdatedISO: new Date().toISOString(),
+    teams: [
+      {
+        id: "uae",
+        name: "UAE Team Emirates",
+        riders: [
+          { id: "tadej-pogacar", name: "Tadej Pogačar", countryCode: "SI", role: "Leader" },
+        ],
+      },
+    ],
+  },
+};
+
+export function getMockStartlist(raceId: string): StartlistData {
+  return (
+    MOCK_STARTLISTS_BY_RACE_ID[raceId] ?? {
+      raceId,
+      lastUpdatedISO: new Date().toISOString(),
+      teams: [],
+    }
+  );
 }

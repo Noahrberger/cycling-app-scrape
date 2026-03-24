@@ -1,31 +1,66 @@
-// app/(tabs)/calendar/[raceId]/stages/index.tsx
+import { getStages } from "@/services/raceService";
 import {
   formatShort,
-  getRaceById,
-  getStagesForRace,
   parseDate,
-  RaceDetails,
-  Stage,
+  type Stage,
 } from "@/store/raceStore";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+type LoadState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; data: Stage[] };
 
 export default function StagesListScreen() {
   const router = useRouter();
   const { raceId } = useLocalSearchParams<{ raceId: string }>();
   const id = String(raceId ?? "");
 
-  const race = useMemo<RaceDetails | null>(() => getRaceById(id), [id]);
-  const stages = useMemo<Stage[]>(() => (race ? getStagesForRace(race) : []), [race]);
+  const [state, setState] = useState<LoadState>({ status: "loading" });
 
-  if (!race) {
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadStages() {
+      setState({ status: "loading" });
+      const res = await getStages(id);
+
+      if (!mounted) return;
+
+      if (!res.ok) {
+        setState({ status: "error", message: res.error });
+        return;
+      }
+
+      setState({ status: "ready", data: res.data });
+    }
+
+    loadStages();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  if (state.status === "loading") {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyText}>No race found for id: {id}</Text>
+        <Text style={styles.emptyText}>Loading stages...</Text>
       </View>
     );
   }
+
+  if (state.status === "error") {
+    return (
+      <View style={styles.empty}>
+        <Text style={styles.emptyText}>{state.message}</Text>
+      </View>
+    );
+  }
+
+  const stages = state.data;
 
   if (stages.length === 0) {
     return (
@@ -40,22 +75,24 @@ export default function StagesListScreen() {
       {stages.map((stage) => (
         <Pressable
           key={`stage-${stage.stageNumber}`}
-   onPress={() =>
-  router.replace({
-    pathname: "/races/[raceId]/stages/[stagenumber]",
-    params: {
-      raceId: id,
-      stagenumber: String(stage.stageNumber),
-    },
-  })
-}
+          onPress={() =>
+            router.replace({
+              pathname: "/races/[raceId]/stages/[stagenumber]",
+              params: {
+                raceId: id,
+                stagenumber: String(stage.stageNumber),
+              },
+            })
+          }
           style={styles.stageRow}
         >
           <View style={styles.stageTopRow}>
             <Text style={styles.stageTitle} numberOfLines={1}>
               {stage.stageNumber}. {stage.startCity} – {stage.finishCity}
             </Text>
-            <Text style={styles.stageDate}>{formatShort(parseDate(stage.date))}</Text>
+            <Text style={styles.stageDate}>
+              {formatShort(parseDate(stage.date))}
+            </Text>
           </View>
 
           <Text style={styles.stageMeta}>

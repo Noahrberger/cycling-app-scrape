@@ -1,13 +1,13 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Keyboard,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 import type { StartlistData, StartlistTeam } from "@/fixtures/startlist";
@@ -22,7 +22,7 @@ type LoadState =
 export default function StartlistScreen() {
   const { raceId } = useLocalSearchParams<{ raceId: string }>();
   const id = String(raceId ?? "");
-
+const router = useRouter();
   const [state, setState] = useState<LoadState>({ status: "idle" });
   const [query, setQuery] = useState("");
 const [openTeamIds, setOpenTeamIds] = useState<Set<string>>(() => new Set());
@@ -170,14 +170,26 @@ const toggleTeam = useCallback((teamId: string) => {
 
       {isOpen && (
         <View style={styles.ridersWrap}>
-          {team.riders.map((r) => (
-            <View key={r.id} style={styles.riderRow}>
-              <Text style={styles.riderName}>{r.name}</Text>
-              <Text style={styles.riderMeta}>
-                {r.countryCode ?? "—"} {r.role ? `• ${r.role}` : ""}
-              </Text>
-            </View>
-          ))}
+        {team.riders.map((r) => (
+  <Pressable
+    key={r.id}
+    onPress={() =>
+      router.push({
+        pathname: "/riders/[riderId]",
+        params: { riderId: String(r.id) },
+      })
+    }
+    style={({ pressed }) => [
+      styles.riderRow,
+      pressed && { opacity: 0.7 },
+    ]}
+  >
+    <Text style={styles.riderName}>{r.name}</Text>
+    <Text style={styles.riderMeta}>
+      {r.countryCode ?? "—"} {r.role ? `• ${r.role}` : ""}
+    </Text>
+  </Pressable>
+))}
         </View>
       )}
     </View>

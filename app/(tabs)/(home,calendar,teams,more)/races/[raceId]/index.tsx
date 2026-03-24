@@ -1,17 +1,47 @@
 // app/races/[raceId]/index.tsx
-import { getRaceById, RaceDetails } from "@/store/raceStore";
+import { getRace } from "@/services/raceService";
+import type { RaceDetails } from "@/store/raceStore";
 import { useLocalSearchParams } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+
+type LoadState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; data: RaceDetails };
 
 export default function RaceOverviewScreen() {
   const { raceId } = useLocalSearchParams<{ raceId: string }>();
   const id = String(raceId ?? "");
 
-  const race = useMemo<RaceDetails | null>(() => getRaceById(id), [id]);
+  const [state, setState] = useState<LoadState>({ status: "loading" });
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadRace() {
+      setState({ status: "loading" });
+      const res = await getRace(id);
+
+      if (!mounted) return;
+
+      if (!res.ok) {
+        setState({ status: "error", message: res.error });
+        return;
+      }
+
+      setState({ status: "ready", data: res.data });
+    }
+
+    loadRace();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
 
   const rows = useMemo(() => {
-    if (!race) return [`No race found for id: ${id}`];
+    if (state.status !== "ready") return [];
 
     return [
       "General info about the race",
@@ -20,7 +50,27 @@ export default function RaceOverviewScreen() {
       "Key stages",
       "Jerseys",
     ];
-  }, [race, id]);
+  }, [state]);
+
+  if (state.status === "loading") {
+    return (
+      <View style={{ paddingBottom: 40 }}>
+        <View style={styles.row}>
+          <Text style={styles.rowText}>Loading race...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <View style={{ paddingBottom: 40 }}>
+        <View style={styles.row}>
+          <Text style={styles.rowText}>{state.message}</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ paddingBottom: 40 }}>

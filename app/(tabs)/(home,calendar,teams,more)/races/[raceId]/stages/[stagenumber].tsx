@@ -1,15 +1,18 @@
-// app/(tabs)/calendar/[raceId]/stages/[stagenumber].tsx
+import { getRace, getStage } from "@/services/raceService";
+import type { RaceDetails } from "@/store/raceStore";
 import {
-    formatShort,
-    getRaceById,
-    getStagesForRace,
-    parseDate,
-    RaceDetails,
-    Stage,
+  formatShort,
+  parseDate,
+  type Stage,
 } from "@/store/raceStore";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+
+type LoadState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; race: RaceDetails; stage: Stage };
 
 export default function StageDetailScreen() {
   const router = useRouter();
@@ -21,49 +24,88 @@ export default function StageDetailScreen() {
   const id = String(raceId ?? "");
   const num = Number(stagenumber ?? NaN);
 
-  const race = useMemo<RaceDetails | null>(() => getRaceById(id), [id]);
+  const [state, setState] = useState<LoadState>({ status: "loading" });
 
-  const stage = useMemo<Stage | null>(() => {
-    if (!race || !Number.isFinite(num)) return null;
-    const stages = getStagesForRace(race);
-    return stages.find((s) => s.stageNumber === num) ?? null;
-  }, [race, num]);
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadStage() {
+      setState({ status: "loading" });
+
+      const raceRes = await getRace(id);
+      if (!mounted) return;
+
+      if (!raceRes.ok) {
+        setState({ status: "error", message: raceRes.error });
+        return;
+      }
+
+      if (!Number.isFinite(num)) {
+        setState({ status: "error", message: `No stage found: ${String(stagenumber)}` });
+        return;
+      }
+
+      const stageRes = await getStage(id, num);
+      if (!mounted) return;
+
+      if (!stageRes.ok) {
+        setState({ status: "error", message: stageRes.error });
+        return;
+      }
+
+      setState({
+        status: "ready",
+        race: raceRes.data,
+        stage: stageRes.data,
+      });
+    }
+
+    loadStage();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, num, stagenumber]);
 
   const profileImageUrl = useMemo(() => {
-    const url = stage?.profileImage;
+    if (state.status !== "ready") {
+      return "https://via.placeholder.com/1200x360.png?text=Stage+profile";
+    }
+
+    const url = state.stage.profileImage;
     if (url && typeof url === "string" && url.startsWith("http")) return url;
     return "https://via.placeholder.com/1200x360.png?text=Stage+profile";
-  }, [stage]);
+  }, [state]);
 
   return (
     <View style={styles.container}>
       <Pressable
-   onPress={() =>
-  router.push({
-    pathname: "/races/[raceId]/stages",
-    params: { raceId: id },
-  })
-}
+        onPress={() =>
+          router.push({
+            pathname: "/races/[raceId]/stages",
+            params: { raceId: id },
+          })
+        }
         style={styles.backButton}
       >
         <Text style={styles.backText}>← Back to stages</Text>
       </Pressable>
 
-      {!race ? (
-        <Text style={styles.note}>No race found for id: {id}</Text>
-      ) : !stage ? (
-        <Text style={styles.note}>No stage found: {String(stagenumber)}</Text>
+      {state.status === "loading" ? (
+        <Text style={styles.note}>Loading stage...</Text>
+      ) : state.status === "error" ? (
+        <Text style={styles.note}>{state.message}</Text>
       ) : (
         <View style={styles.card}>
-          <Text style={styles.stageLabel}>Stage {stage.stageNumber}</Text>
+          <Text style={styles.stageLabel}>Stage {state.stage.stageNumber}</Text>
 
           <Text style={styles.title}>
-            {stage.startCity} → {stage.finishCity}
+            {state.stage.startCity} → {state.stage.finishCity}
           </Text>
 
           <Text style={styles.meta}>
-            {formatShort(parseDate(stage.date))} • {stage.distanceKm} km •{" "}
-            {stage.stageType}
+            {formatShort(parseDate(state.stage.date))} • {state.stage.distanceKm} km •{" "}
+            {state.stage.stageType}
           </Text>
 
           <View style={styles.profileWrap}>
