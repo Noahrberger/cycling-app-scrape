@@ -1,4 +1,4 @@
-// app/(tabs)/calendar/_raceStore.ts
+
 
 export type Tab = "overview" | "stages" | "startlist" | "results";
 export type StageType = "Flat" | "Hill" | "Mountain" | "TT";
@@ -59,7 +59,37 @@ export const MEN_RACES: RaceDetails[] = [
   { id: "copenhagen-sprint", name: "Copenhagen Sprint", countryCode: "DK", startDate: "2026-06-14", endDate: "2026-06-14", classCode: "1.UWT", category: "Men", type: "One-day", stagesCount: 1 },
   { id: "tour-de-suisse", name: "Tour de Suisse", countryCode: "CH", startDate: "2026-06-17", endDate: "2026-06-21", classCode: "2.UWT", category: "Men", type: "Stage race" },
 
-  { id: "tour-de-france", name: "Tour de France", countryCode: "FR", startDate: "2026-07-04", endDate: "2026-07-26", classCode: "2.UWT", category: "Men", type: "Stage race", stagesCount: 21 },
+  {
+  id: "tour-de-france",
+  name: "Tour de France",
+  countryCode: "FR",
+  startDate: "2026-07-04",
+  endDate: "2026-07-26",
+  classCode: "2.UWT",
+  category: "Men",
+  type: "Stage race",
+  stagesCount: 21,
+  stages: [
+    {
+      stageNumber: 1,
+      startCity: "Lille",
+      finishCity: "Lille",
+      distanceKm: 185,
+      stageType: "Flat",
+      date: "2026-07-04",
+      profileImage: "https://...",
+    },
+    {
+      stageNumber: 2,
+      startCity: "Valenciennes",
+      finishCity: "Boulogne-sur-Mer",
+      distanceKm: 172,
+      stageType: "Hill",
+      date: "2026-07-05",
+      profileImage: "https://...",
+    },
+  ],
+},
 
   { id: "san-sebastian", name: "Donostia San Sebastian Klasikoa", countryCode: "ES", startDate: "2026-08-01", endDate: "2026-08-01", classCode: "1.UWT", category: "Men", type: "One-day", stagesCount: 1 },
   { id: "tour-de-pologne", name: "Tour de Pologne", countryCode: "PL", startDate: "2026-08-03", endDate: "2026-08-09", classCode: "2.UWT", category: "Men", type: "Stage race" },
