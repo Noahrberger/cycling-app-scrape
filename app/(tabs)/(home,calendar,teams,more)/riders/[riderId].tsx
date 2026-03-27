@@ -1,177 +1,213 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import {
+  getRiderProfile,
+  type RiderProfileData,
+} from "@/services/riderService";
 
 type RiderTab = "profile" | "achievements" | "career";
 
-type Rider = {
-  id: string;
-  name: string;
-  nationality: string;
-  age?: number;
-  teamId: string;
-  role?: "GC" | "Sprinter" | "Climber" | "TT" | "Domestique";
-};
+type LoadState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "ready"; data: RiderProfileData };
 
-function getMockRider(riderId: string): Rider | null {
-  const riders: Rider[] = [
-    {
-      id: "jonas-vingegaard",
-      name: "Jonas Vingegaard",
-      nationality: "Denmark",
-      age: 29,
-      teamId: "visma",
-      role: "GC",
-    },
-  ];
-  return riders.find((r) => r.id === riderId) ?? null;
+function getFlagEmojiFromISO2(countryCode?: string) {
+  if (!countryCode || countryCode.length !== 2) return "🏳️";
+  const codePoints = countryCode
+    .toUpperCase()
+    .split("")
+    .map((char) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
 }
-function getFlagEmoji(countryName: string) {
+
+function getCountryLabel(countryCode?: string) {
   const map: Record<string, string> = {
-    Denmark: "🇩🇰",
-    Norway: "🇳🇴",
-    Sweden: "🇸🇪",
-    France: "🇫🇷",
-    Belgium: "🇧🇪",
-    Netherlands: "🇳🇱",
-    Spain: "🇪🇸",
-    Italy: "🇮🇹",
-    Germany: "🇩🇪",
-    Switzerland: "🇨🇭",
-    UnitedStates: "🇺🇸",
-    "United States": "🇺🇸",
-    UnitedKingdom: "🇬🇧",
-    "United Kingdom": "🇬🇧",
-    Australia: "🇦🇺",
-    "United Arab Emirates": "🇦🇪",
-    Bahrain: "🇧🇭",
-    Kazakhstan: "🇰🇿",
+    DK: "Denmark",
+    NO: "Norway",
+    SE: "Sweden",
+    FR: "France",
+    BE: "Belgium",
+    NL: "Netherlands",
+    ES: "Spain",
+    IT: "Italy",
+    DE: "Germany",
+    CH: "Switzerland",
+    US: "United States",
+    GB: "United Kingdom",
+    AU: "Australia",
+    AE: "United Arab Emirates",
+    BH: "Bahrain",
+    KZ: "Kazakhstan",
+    SI: "Slovenia",
+    EC: "Ecuador",
+    ER: "Eritrea",
+    LV: "Latvia",
   };
-  return map[countryName] ?? "🏳️";
+
+  return map[countryCode ?? ""] ?? countryCode ?? "Unknown";
 }
 
-function getTeamInitials(teamId: string) {
-  if (!teamId) return "T";
-  // Visma -> V, uae -> UAE, etc
-  const clean = teamId.replace(/[^a-zA-Z0-9]/g, " ").trim();
+function getTeamInitials(teamName: string) {
+  if (!teamName) return "T";
+  const clean = teamName.replace(/[^a-zA-Z0-9]/g, " ").trim();
   const parts = clean.split(/\s+/).filter(Boolean);
   if (parts.length === 1) return parts[0].slice(0, 3).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 function getRoleBadge(role?: string) {
-  // Hvis du vil ha flere senere (Sprinter, Climber osv), er det lett.
   if (!role) return { text: "Rider" };
   return { text: role };
 }
 
 export default function RiderProfileScreen() {
   const router = useRouter();
-const { riderId } = useLocalSearchParams<{
-  riderId: string;
-}>();
-
-
+  const { riderId } = useLocalSearchParams<{ riderId: string }>();
 
   const [activeTab, setActiveTab] = useState<RiderTab>("profile");
-const handleBack = () => {
-  router.back();
-};
+  const [state, setState] = useState<LoadState>({ status: "idle" });
 
+  const id = useMemo(() => String(riderId ?? ""), [riderId]);
 
-  const rider = useMemo(() => {
-    if (!riderId) return null;
-    return getMockRider(String(riderId));
-  }, [riderId]);
+  useEffect(() => {
+    async function load() {
+      if (!id) {
+        setState({ status: "error", message: "Missing riderId" });
+        return;
+      }
 
+      setState({ status: "loading" });
+
+      const res = await getRiderProfile(id);
+
+      if (!res.ok) {
+        setState({ status: "error", message: res.error });
+        return;
+      }
+
+      setState({ status: "ready", data: res.data });
+    }
+
+    load();
+  }, [id]);
+
+  const handleBack = () => {
+    router.back();
+  };
 
   return (
     <SafeAreaView style={styles.screen}>
-      {/* Header */}
-     <View style={styles.header}>
-<Pressable onPress={handleBack} style={styles.backButton}>
-  <Text style={styles.backText}>← Back</Text>
-</Pressable>
+      <View style={styles.header}>
+        <Pressable onPress={handleBack} style={styles.backButton}>
+          <Text style={styles.backText}>← Back</Text>
+        </Pressable>
+      </View>
 
-</View>
-
-
-    
-
-      {/* Content */}
       <View style={styles.content}>
-        {!rider ? (
-          <Text style={styles.note}>
-            No rider found for id: {String(riderId)}
-          </Text>
-       ) : (
-  <>
-    {/* HERO HEADER */}
-    <View style={styles.hero}>
-      <View style={styles.heroTopRow}>
-        {/* Team logo placeholder */}
-        <View style={styles.teamLogo}>
-          <Text style={styles.teamLogoText}>
-            {getTeamInitials(rider.teamId)}
-          </Text>
-        </View>
-
-        <View style={styles.heroTopText}>
-          <Text style={styles.heroName} numberOfLines={1}>
-            {rider.name}
-          </Text>
-
-          <View style={styles.heroMetaRow}>
-            <Text style={styles.heroMeta}>
-              {getFlagEmoji(rider.nationality)} {rider.nationality}
-            </Text>
-
-            <View style={styles.dot} />
-            <Text style={styles.heroMeta}>Age {rider.age ?? "—"}</Text>
+        {(state.status === "idle" || state.status === "loading") && (
+          <View style={styles.center}>
+            <ActivityIndicator />
+            <Text style={styles.note}>Loading rider…</Text>
           </View>
-        </View>
-      </View>
+        )}
 
-      {/* Badges */}
-      <View style={styles.badgesRow}>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{getRoleBadge(rider.role).text}</Text>
-        </View>
-      </View>
-    </View>
+        {state.status === "error" && (
+          <View style={styles.center}>
+            <Text style={styles.sectionTitle}>Couldn’t load rider</Text>
+            <Text style={styles.note}>{state.message}</Text>
+          </View>
+        )}
 
-{/* TABS UNDER HERO */}
-<View style={styles.tabsWrap}>
-  <TabButton
-    label="Profile"
-    isActive={activeTab === "profile"}
-    onPress={() => setActiveTab("profile")}
-  />
-  <TabButton
-    label="Achievements"
-    isActive={activeTab === "achievements"}
-    onPress={() => setActiveTab("achievements")}
-  />
-  <TabButton
-    label="Career"
-    isActive={activeTab === "career"}
-    onPress={() => setActiveTab("career")}
-  />
-</View>
+        {state.status === "ready" && (
+          <>
+            <View style={styles.hero}>
+              <View style={styles.heroTopRow}>
+                <View style={styles.teamLogo}>
+                  <Text style={styles.teamLogoText}>
+                    {getTeamInitials(state.data.teamName)}
+                  </Text>
+                </View>
 
-{activeTab === "profile" && (
-  <>
-    <View style={styles.card}>
+                <View style={styles.heroTopText}>
+                  <Text style={styles.heroName} numberOfLines={1}>
+                    {state.data.name}
+                  </Text>
 
-                  <Row label="Nationality" value={rider.nationality} />
-                  <Row label="Age" value={rider.age ? String(rider.age) : "—"} />
-                  <Row label="Role" value={rider.role ?? "—"} />
-                  <Row label="Team ID" value={rider.teamId} />
+                  <View style={styles.heroMetaRow}>
+                    <Text style={styles.heroMeta}>
+                      {getFlagEmojiFromISO2(state.data.countryCode)}{" "}
+                      {getCountryLabel(state.data.countryCode)}
+                    </Text>
+
+                    <View style={styles.dot} />
+                    <Text style={styles.heroMeta}>
+                      Age {state.data.age ?? "—"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.badgesRow}>
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {getRoleBadge(state.data.role).text}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.tabsWrap}>
+              <TabButton
+                label="Profile"
+                isActive={activeTab === "profile"}
+                onPress={() => setActiveTab("profile")}
+              />
+              <TabButton
+                label="Achievements"
+                isActive={activeTab === "achievements"}
+                onPress={() => setActiveTab("achievements")}
+              />
+              <TabButton
+                label="Career"
+                isActive={activeTab === "career"}
+                onPress={() => setActiveTab("career")}
+              />
+            </View>
+
+            {activeTab === "profile" && (
+              <>
+                <View style={styles.card}>
+                  <Row
+                    label="Nationality"
+                    value={getCountryLabel(state.data.countryCode)}
+                  />
+                  <Row
+                    label="Age"
+                    value={state.data.age ? String(state.data.age) : "—"}
+                  />
+                  <Row label="Role" value={state.data.role ?? "—"} />
+                  <Row label="Team" value={state.data.teamName} />
+                  <Row label="Team ID" value={state.data.teamId} />
+                  <Row label="Rider ID" value={state.data.id} />
                 </View>
 
                 <Text style={styles.note}>
-                  Neste: bilde, stats (W/KG, resultater), sesong, ritt osv.
+                  Neste: bilde, stats, sesongresultater, tidligere lag og relaterte ritt.
                 </Text>
               </>
             )}
@@ -180,8 +216,7 @@ const handleBack = () => {
               <>
                 <Text style={styles.sectionTitle}>Achievements</Text>
                 <Text style={styles.note}>
-                  Placeholder: Her kan vi vise store seiere (Grand Tours, monuments),
-                  trøyer, etappeseiere, NM osv.
+                  Placeholder: Her kan vi vise store seiere, trøyer, etappeseiere og sesonghøydepunkter.
                 </Text>
               </>
             )}
@@ -190,8 +225,7 @@ const handleBack = () => {
               <>
                 <Text style={styles.sectionTitle}>Career</Text>
                 <Text style={styles.note}>
-                  Placeholder: Her kan vi vise karriere-tidslinje: lag per år,
-                  viktige resultater per sesong, U23 → proff osv.
+                  Placeholder: Her kan vi vise karriere-tidslinje, lag per år og utvikling sesong for sesong.
                 </Text>
               </>
             )}
@@ -245,19 +279,11 @@ const styles = StyleSheet.create({
   backButton: { paddingVertical: 8, alignSelf: "flex-start" },
   backText: { color: "#111111", fontSize: 16 },
 
-  name: {
-    marginTop: 6,
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#111111",
-  },
-
   tabsWrap: {
     flexDirection: "row",
     gap: 8,
-  marginTop:12,
-  marginBottom: 6,
-   
+    marginTop: 12,
+    marginBottom: 6,
   },
   tabButton: {
     paddingVertical: 10,
@@ -298,7 +324,8 @@ const styles = StyleSheet.create({
   rowValue: { color: "#111111", fontSize: 13, fontWeight: "900" },
 
   note: { marginTop: 12, color: "#666666", lineHeight: 20 },
-    hero: {
+
+  hero: {
     marginTop: 6,
     padding: 14,
     borderRadius: 16,
@@ -373,4 +400,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
+  center: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 24,
+  },
 });

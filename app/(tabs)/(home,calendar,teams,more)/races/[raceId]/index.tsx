@@ -1,6 +1,6 @@
 // app/races/[raceId]/index.tsx
 import { getRace } from "@/services/raceService";
-import type { RaceDetails } from "@/store/raceStore";
+import type { RaceDetails } from "@/types/models";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";

@@ -10,14 +10,14 @@ import {
   View,
 } from "react-native";
 
-import type { StartlistData, StartlistTeam } from "@/fixtures/startlist";
-import { getStartlist } from "@/services/raceService";
+import { getStartlist } from "@/services/startlistService";
+import type { StartlistTeamView, StartlistViewData } from "@/types/viewModels";
 
 type LoadState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ready"; data: StartlistData };
+  | { status: "ready"; data: StartlistViewData };
 
 export default function StartlistScreen() {
   const { raceId } = useLocalSearchParams<{ raceId: string }>();
@@ -51,7 +51,7 @@ const toggleTeam = useCallback((teamId: string) => {
 }, []);
 
 
-  const teamsFiltered: StartlistTeam[] = useMemo(() => {
+  const teamsFiltered: StartlistTeamView[] = useMemo(() => {
     if (state.status !== "ready") return [];
     const q = query.trim().toLowerCase();
     if (!q) return state.data.teams;
@@ -72,13 +72,13 @@ const toggleTeam = useCallback((teamId: string) => {
     return;
   }
 
-  if (teamsFiltered.length > 0) {
-    setOpenTeamIds((prev) => {
-      const next = new Set(prev);
-      next.add(teamsFiltered[0].id); // åpner minst ett team med treff
-      return next;
-    });
-  }
+ if (teamsFiltered.length > 0) {
+  setOpenTeamIds((prev) => {
+    const next = new Set(prev);
+    next.add(teamsFiltered[0].teamId);
+    return next;
+  });
+}
 }, [query, teamsFiltered]);
 
 
@@ -151,14 +151,13 @@ const toggleTeam = useCallback((teamId: string) => {
           <Text style={styles.note}>No riders match your search.</Text>
         </View>
       ) : (
-     teamsFiltered.map((team) => {
- const isOpen = openTeamIds.has(team.id);
-
+  teamsFiltered.map((team) => {
+  const isOpen = openTeamIds.has(team.teamId);
 
   return (
-    <View key={team.id} style={styles.teamCard}>
+    <View key={team.teamId} style={styles.teamCard}>
       <Pressable
-        onPress={() => toggleTeam(team.id)}
+        onPress={() => toggleTeam(team.teamId)}
         style={({ pressed }) => [
           styles.teamHeader,
           pressed && { opacity: 0.7 },

@@ -10,21 +10,16 @@ import {
   View,
 } from "react-native";
 
-import type {
-  ResultCategory,
-  ResultRow,
-  ResultUnit,
-  ResultsData,
-  StageOption,
-} from "@/fixtures/results";
-import { getResults } from "@/services/raceService";
+import { getResults } from "@/services/resultsService";
+import type { ResultCategory, ResultUnit } from "@/types/api";
+import type { ResultRowView, ResultsViewData } from "@/types/viewModels";
 
 export default function ResultsScreen() {
   const router = useRouter();
   const { raceId } = useLocalSearchParams<{ raceId: string }>();
   const id = String(raceId ?? "");
 
-  const [resultsData, setResultsData] = useState<ResultsData | null>(null);
+  const [resultsData, setResultsData] = useState<ResultsViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,14 +81,15 @@ export default function ResultsScreen() {
     return m;
   }, []);
 
-  const stageOptions: StageOption[] = resultsData?.stageOptions ?? [];
+  const stageOptions = resultsData?.stageOptions ?? [];
   const resultsByStageAndCategory =
     resultsData?.resultsByStageAndCategory ?? {};
 
   const stageKey =
     selectedStageNumber == null ? "latest" : String(selectedStageNumber);
 
-  const data = resultsByStageAndCategory[stageKey]?.[selectedCategory] ?? [];
+  const data: ResultRowView[] =
+    resultsByStageAndCategory[stageKey]?.[selectedCategory] ?? [];
   const selectedUnit = unitByCategory[selectedCategory];
 
   const stageLabel = useMemo(() => {
@@ -120,13 +116,13 @@ export default function ResultsScreen() {
     return `Points-style · Everyone points · (${scope})`;
   }, [selectedCategory, selectedStageNumber, selectedUnit]);
 
-  const renderRow = (item: ResultRow) => {
+  const renderRow = (item: ResultRowView) => {
     const rightValue =
       item.unit === "points"
         ? `${item.points}`
         : item.rank === 1
-        ? item.totalTime ?? ""
-        : item.gap ?? "";
+          ? item.totalTime ?? ""
+          : item.gap ?? "";
 
     const rightLabel = item.unit === "points" ? "pts" : "";
 
@@ -158,7 +154,7 @@ export default function ResultsScreen() {
       </>
     );
 
-    if (!item.riderId) {
+    if (item.entityType !== "rider" || !item.riderId) {
       return <View key={item.id}>{content}</View>;
     }
 
@@ -168,7 +164,7 @@ export default function ResultsScreen() {
         onPress={() =>
           router.push({
             pathname: "/riders/[riderId]",
-            params: { riderId: item.riderId! },
+            params: { riderId: String(item.riderId) },
           })
         }
       >

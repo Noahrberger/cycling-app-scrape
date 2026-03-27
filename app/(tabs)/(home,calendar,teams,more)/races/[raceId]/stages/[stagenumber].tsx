@@ -1,10 +1,9 @@
 import { getRace, getStage } from "@/services/raceService";
-import type { RaceDetails } from "@/store/raceStore";
 import {
   formatShort,
   parseDate,
-  type Stage,
 } from "@/store/raceStore";
+import type { RaceDetails, Stage } from "@/types/models";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";

@@ -1,6 +1,6 @@
 import RaceHero from "@/components/RaceHero";
 import { getRace } from "@/services/raceService";
-import type { RaceDetails } from "@/store/raceStore";
+import type { RaceDetails } from "@/types/models";
 import { Slot, useLocalSearchParams, usePathname, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";

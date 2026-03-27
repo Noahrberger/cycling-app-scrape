@@ -2,8 +2,8 @@ import { getStages } from "@/services/raceService";
 import {
   formatShort,
   parseDate,
-  type Stage,
 } from "@/store/raceStore";
+import type { Stage } from "@/types/models";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
