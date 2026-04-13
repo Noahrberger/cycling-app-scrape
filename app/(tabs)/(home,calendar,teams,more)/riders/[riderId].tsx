@@ -80,6 +80,7 @@ export default function RiderProfileScreen() {
   const { riderId } = useLocalSearchParams<{ riderId: string }>();
 
   const [activeTab, setActiveTab] = useState<RiderTab>("profile");
+  
   const [state, setState] = useState<LoadState>({ status: "idle" });
 
   const id = useMemo(() => String(riderId ?? ""), [riderId]);
@@ -191,20 +192,16 @@ export default function RiderProfileScreen() {
 
             {activeTab === "profile" && (
               <>
-                <View style={styles.card}>
-                  <Row
-                    label="Nationality"
-                    value={getCountryLabel(state.data.countryCode)}
-                  />
-                  <Row
-                    label="Age"
-                    value={state.data.age ? String(state.data.age) : "—"}
-                  />
-                  <Row label="Role" value={state.data.role ?? "—"} />
-                  <Row label="Team" value={state.data.teamName} />
-                  <Row label="Team ID" value={state.data.teamId} />
-                  <Row label="Rider ID" value={state.data.id} />
-                </View>
+               <View style={styles.card}>
+  <Row label="Nationality" value={getCountryLabel(state.data.countryCode)} />
+  <Row label="Age" value={state.data.age ? String(state.data.age) : "—"} />
+  <Row label="Role" value={state.data.role ?? "—"} />
+  <Row label="Team" value={state.data.teamName} />
+  <Row label="Team ID" value={state.data.teamId} />
+  <Row label="Rider ID" value={state.data.id} />
+  <Row label="Height" value={state.data.height ? `${state.data.height} cm` : "—"} />
+  <Row label="Weight" value={state.data.weight ? `${state.data.weight} kg` : "—"} />
+</View>
 
                 <Text style={styles.note}>
                   Neste: bilde, stats, sesongresultater, tidligere lag og relaterte ritt.

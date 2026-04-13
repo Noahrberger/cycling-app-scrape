@@ -2,7 +2,7 @@ export type RaceCategory = "Men" | "Women";
 export type RaceType = "Stage race" | "One-day";
 
 export type Tab = "overview" | "stages" | "startlist" | "results";
-export type StageType = "Flat" | "Hill" | "Mountain" | "TT";
+export type StageType = "Flat" | "Hill" | "Mountain" | "TT" | "Unknown";
 
 export type TeamRole =
   | "Leader"

@@ -1,5 +1,4 @@
-import { getRiderRecord, getTeamRecord } from "@/repositories/riderRepository";
-import type { Rider, Team } from "@/types/models";
+import { getRiderRecord } from "@/repositories/riderRepository";
 import type { ServiceResult } from "@/types/service";
 
 export type RiderProfileData = {
@@ -10,38 +9,34 @@ export type RiderProfileData = {
   teamId: string;
   teamName: string;
   role?: string;
+  height?: number;
+  weight?: number;
+  imgUrl?: string;
 };
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function mapRiderToProfile(rider: Rider, team: Team | null): RiderProfileData {
-  return {
-    id: rider.id,
-    name: rider.name,
-    countryCode: rider.countryCode,
-    age: rider.age,
-    teamId: rider.teamId,
-    teamName: team?.name ?? "Unknown Team",
-    role: rider.role,
-  };
-}
 
 export async function getRiderProfile(
   riderId: string
 ): Promise<ServiceResult<RiderProfileData>> {
-  await delay(120);
 
-  const rider = getRiderRecord(riderId);
-  if (!rider) {
+  const raw = await getRiderRecord(riderId);
+
+  if (!raw) {
     return { ok: false, error: `No rider found for id: ${riderId}` };
   }
 
-  const team = getTeamRecord(rider.teamId);
-
   return {
     ok: true,
-    data: mapRiderToProfile(rider, team),
+    data: {
+      id: riderId,
+      name: raw.info.ridername,
+      countryCode: raw.info.nation.toUpperCase(),
+      age: raw.info.age,
+      teamId: "",
+      teamName: raw.info.teamname,
+      role: undefined,
+      height: raw.info.height,
+      weight: raw.info.weight,
+      imgUrl: raw.info.img,
+    },
   };
 }

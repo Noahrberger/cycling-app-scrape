@@ -1,104 +1,113 @@
-import { getRiderById } from "@/fixtures/riders";
-import { getTeamById } from "@/fixtures/teams";
+import { getCalendarRecord, getEventIdForRace } from "@/repositories/calendarRepository";
 import { getResultsRecord } from "@/repositories/resultsRepository";
-import type {
-  ApiResultRow,
-  ApiResultsResponse,
-  ResultCategory,
-} from "@/types/api";
+import type { ResultCategory } from "@/types/api";
 import type { ServiceResult } from "@/types/service";
 import type { ResultRowView, ResultsViewData } from "@/types/viewModels";
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+function toCategory(name: string): ResultCategory | null {
+  switch (name) {
+    case "Stage":   return "stage";
+    case "General": return "gc";
+    case "Points":  return "points";
+    case "KOM":     return "kom";
+    case "Youth":   return "youth";
+    case "Teams":   return "team";
+    default:        return null;
+  }
+}
+
+function isGap(time: string): boolean {
+  return time.startsWith("+");
 }
 
 export async function getResults(
   raceId: string
 ): Promise<ServiceResult<ResultsViewData>> {
-  await delay(250);
 
-  const raw: ApiResultsResponse = await getResultsRecord(raceId);
+  const [raw, calendar] = await Promise.all([
+    getResultsRecord(raceId),
+    getCalendarRecord(),
+  ]);
 
-  const mappedResultsByStageAndCategory = Object.fromEntries(
-    Object.entries(raw.resultsByStageAndCategory).map(([stageKey, categoryMap]) => {
-      const mappedCategoryMap = Object.fromEntries(
-        Object.entries(categoryMap).map(([categoryKey, rows]) => {
-          const mappedRows: ResultRowView[] = rows.map((row: ApiResultRow) => {
-            if (row.entityType === "rider") {
-              const rider = getRiderById(row.riderId);
-              const team = rider ? getTeamById(rider.teamId) : null;
+  if (!raw) {
+    return { ok: false, error: "No results found" };
+  }
 
-              if (row.unit === "time") {
-                return {
-                  id: row.id,
-                  entityType: "rider",
-                  riderId: row.riderId,
-                  teamId: rider?.teamId,
-                  rank: row.rank,
-                  riderName: rider?.name ?? "Unknown Rider",
-                  teamName: team?.name ?? "Unknown Team",
-                  unit: "time" ,
-                  totalTime: row.totalTime,
-                  gap: row.gap,
-                };
-              }
+  // Hent stages for dette rittet fra calendar
+  const eventId = getEventIdForRace(raceId);
+  const calendarEvent = eventId
+    ? calendar.data.find((e) => e.event_id === eventId)
+    : null;
 
-              return {
-                id: row.id,
-                entityType: "rider",
-                riderId: row.riderId,
-                teamId: rider?.teamId,
-                rank: row.rank,
-                riderName: rider?.name ?? "Unknown Rider",
-                teamName: team?.name ?? "Unknown Team",
-                unit: "points" ,
-                points: row.points,
-              };
-            }
+  const stageOptions = calendarEvent
+    ? calendarEvent.stages.map((s, index) => ({
+        stageNumber: index + 1,
+        label: s.stagename,
+      }))
+    : [];
 
-            const team = getTeamById(row.teamId);
-
-            if (row.unit === "time") {
-              return {
-                id: row.id,
-                entityType: "team",
-                teamId: row.teamId,
-                rank: row.rank,
-                riderName: team?.name ?? "Unknown Team",
-                teamName: "Team classification",
-                unit: "time" ,
-                totalTime: row.totalTime,
-                gap: row.gap,
-              };
-            }
-
-            return {
-              id: row.id,
-              entityType: "team",
-              teamId: row.teamId,
-              rank: row.rank,
-              riderName: team?.name ?? "Unknown Team",
-              teamName: "Team classification",
-              unit: "points" ,
-              points: row.points,
-            };
-          });
-
-          return [categoryKey, mappedRows];
-        })
-      ) as Record<ResultCategory, ResultRowView[]>;
-
-      return [stageKey, mappedCategoryMap];
-    })
-  ) as ResultsViewData["resultsByStageAndCategory"];
-
-  const mapped: ResultsViewData = {
-    raceId: raw.raceId,
-    stageOptions: raw.stageOptions,
-    lastUpdatedISO: raw.lastUpdatedISO,
-    resultsByStageAndCategory: mappedResultsByStageAndCategory,
+  const resultsByStageAndCategory: ResultsViewData["resultsByStageAndCategory"] = {};
+  const categoryMap: Record<ResultCategory, ResultRowView[]> = {
+    stage: [], gc: [], points: [], kom: [], youth: [], team: [],
   };
 
-  return { ok: true, data: mapped };
+  for (const classification of raw.results) {
+    const category = toCategory(classification.name);
+    if (!category) continue;
+
+    const isTeam = category === "team";
+    const isPoints = category === "points" || category === "kom";
+
+    const rows: ResultRowView[] = classification.entries.map((entry) => {
+      const fullName = `${entry.first_name} ${entry.last_name}`.trim();
+      const id = String(entry.id);
+
+      if (isTeam) {
+        if (isPoints) {
+          return {
+            id, entityType: "team", teamId: String(entry.team_id),
+            rank: entry.rnk, riderName: entry.team,
+            teamName: "Team classification",
+            unit: "points", points: entry.pcs_pnts,
+          };
+        }
+        return {
+          id, entityType: "team", teamId: String(entry.team_id),
+          rank: entry.rnk, riderName: entry.team,
+          teamName: "Team classification", unit: "time",
+          ...(isGap(entry.time) ? { gap: entry.time } : { totalTime: entry.time }),
+        };
+      }
+
+      if (isPoints) {
+        return {
+          id, entityType: "rider", riderId: String(entry.rider_id),
+          teamId: String(entry.team_id), rank: entry.rnk,
+          riderName: fullName, teamName: entry.team,
+          unit: "points", points: entry.pcs_pnts,
+        };
+      }
+
+      return {
+        id, entityType: "rider", riderId: String(entry.rider_id),
+        teamId: String(entry.team_id), rank: entry.rnk,
+        riderName: fullName, teamName: entry.team, unit: "time",
+        ...(isGap(entry.time) ? { gap: entry.time } : { totalTime: entry.time }),
+      };
+    });
+
+    categoryMap[category] = rows;
+  }
+
+  resultsByStageAndCategory["latest"] = categoryMap;
+
+  return {
+    ok: true,
+    data: {
+      raceId,
+      stageOptions,
+      lastUpdatedISO: raw.info.race_date,
+      resultsByStageAndCategory,
+    },
+  };
 }

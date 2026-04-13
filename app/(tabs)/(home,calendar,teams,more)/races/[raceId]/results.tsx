@@ -205,32 +205,39 @@ export default function ResultsScreen() {
             </Text>
           </Pressable>
 
-          {stageMenuOpen && (
-            <View style={styles.stageMenu}>
-              <Pressable
-                onPress={() => {
-                  setSelectedStageNumber(null);
-                  setStageMenuOpen(false);
-                }}
-                style={styles.stageMenuItem}
-              >
-                <Text style={styles.stageMenuItemText}>Latest</Text>
-              </Pressable>
+        {stageMenuOpen && (
+  <View style={styles.stageMenu}>
+    <ScrollView
+      style={styles.stageMenuScroll}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Pressable
+        onPress={() => {
+          setSelectedStageNumber(null);
+          setStageMenuOpen(false);
+        }}
+        style={styles.stageMenuItem}
+      >
+        <Text style={styles.stageMenuItemText}>Latest</Text>
+      </Pressable>
 
-              {stageOptions.map((s) => (
-                <Pressable
-                  key={s.stageNumber}
-                  onPress={() => {
-                    setSelectedStageNumber(s.stageNumber);
-                    setStageMenuOpen(false);
-                  }}
-                  style={styles.stageMenuItem}
-                >
-                  <Text style={styles.stageMenuItemText}>{s.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
+      {stageOptions.map((s) => (
+        <Pressable
+          key={s.stageNumber}
+          onPress={() => {
+            setSelectedStageNumber(s.stageNumber);
+            setStageMenuOpen(false);
+          }}
+          style={styles.stageMenuItem}
+        >
+          <Text style={styles.stageMenuItemText}>{s.label}</Text>
+        </Pressable>
+      ))}
+    </ScrollView>
+  </View>
+)}
         </View>
       </View>
 
@@ -331,6 +338,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     zIndex: 10,
   },
+  stageMenuScroll: {
+  maxHeight: 300,
+},
   stageMenuItem: {
     paddingVertical: 10,
     paddingHorizontal: 12,

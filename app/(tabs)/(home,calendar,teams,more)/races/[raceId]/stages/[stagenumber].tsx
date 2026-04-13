@@ -80,10 +80,10 @@ export default function StageDetailScreen() {
     <View style={styles.container}>
       <Pressable
         onPress={() =>
-          router.push({
-            pathname: "/races/[raceId]/stages",
-            params: { raceId: id },
-          })
+         router.replace({
+  pathname: "/races/[raceId]/stages",
+  params: { raceId: id },
+})
         }
         style={styles.backButton}
       >

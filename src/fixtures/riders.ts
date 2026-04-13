@@ -1,44 +1,58 @@
-import type { Rider } from "@/types/models";
+import type { PCSRiderResponse } from "@/types/api";
 
-export const RIDERS: Rider[] = [
-  // GC riders
-  { id: "jonas-vingegaard", name: "Jonas Vingegaard", countryCode: "DK", teamId: "visma", role: "Leader" },
-  { id: "tadej-pogacar", name: "Tadej Pogačar", countryCode: "SI", teamId: "uae", role: "Leader" },
-  { id: "remco-evenepoel", name: "Remco Evenepoel", countryCode: "BE", teamId: "soudal", role: "Leader" },
-  { id: "primoz-roglic", name: "Primož Roglič", countryCode: "SI", teamId: "bora", role: "Leader" },
-  { id: "carlos-rodriguez", name: "Carlos Rodríguez", countryCode: "ES", teamId: "ineos", role: "Leader" },
+export const MOCK_PCS_RIDERS: Record<number, PCSRiderResponse> = {
+  194619: {
+    info: {
+      ridername: "Tadej Pogačar", lastname: "POGAČAR", firstname: "Tadej",
+      teamname: "UAE Team Emirates - XRG", birthdate: "1998-09-21", age: 27,
+      place_of_birth: "Klanec", height: 176, weight: 66,
+      nation: "si", country: "Slovenia",
+      img: "https://www.procyclingstats.com/images/riders/oh/dq/tadej-pogacar-2026-n2.png",
+      copyright: "",
+    },
+  },
+  196424: {
+    info: {
+      ridername: "Jonas Vingegaard", lastname: "VINGEGAARD", firstname: "Jonas",
+      teamname: "Visma - Lease a Bike", birthdate: "1996-12-10", age: 28,
+      place_of_birth: "Hillerød", height: 175, weight: 60,
+      nation: "dk", country: "Denmark",
+      img: "",
+      copyright: "",
+    },
+  },
+  212377: {
+    info: {
+      ridername: "Remco Evenepoel", lastname: "EVENEPOEL", firstname: "Remco",
+      teamname: "Soudal Quick-Step", birthdate: "2000-01-25", age: 25,
+      place_of_birth: "Schepdaal", height: 171, weight: 61,
+      nation: "be", country: "Belgium",
+      img: "",
+      copyright: "",
+    },
+  },
+  196333: {
+    info: {
+      ridername: "João Almeida", lastname: "ALMEIDA", firstname: "João",
+      teamname: "UAE Team Emirates - XRG", birthdate: "1998-08-05", age: 27,
+      place_of_birth: "Caldas da Rainha", height: 172, weight: 63,
+      nation: "pt", country: "Portugal",
+      img: "",
+      copyright: "",
+    },
+  },
+  168961: {
+    info: {
+      ridername: "Wout van Aert", lastname: "VAN AERT", firstname: "Wout",
+      teamname: "Visma - Lease a Bike", birthdate: "1994-09-15", age: 30,
+      place_of_birth: "Herentals", height: 191, weight: 78,
+      nation: "be", country: "Belgium",
+      img: "",
+      copyright: "",
+    },
+  },
+};
 
-  // sprinters / classics
-  { id: "wout-van-aert", name: "Wout van Aert", countryCode: "BE", teamId: "visma", role: "Allrounder" },
-  { id: "jasper-philipsen", name: "Jasper Philipsen", countryCode: "BE", teamId: "alpecin", role: "Sprinter" },
-  { id: "biniam-girmay", name: "Biniam Girmay", countryCode: "ER", teamId: "intermarche", role: "Sprinter" },
-  { id: "olav-kooij", name: "Olav Kooij", countryCode: "NL", teamId: "visma", role: "Sprinter" },
-  { id: "kaden-groves", name: "Kaden Groves", countryCode: "AU", teamId: "alpecin", role: "Sprinter" },
-  { id: "mads-pedersen", name: "Mads Pedersen", countryCode: "DK", teamId: "lidl", role: "Sprinter" },
-
-  // climbers / KOM
-  { id: "giulio-ciccone", name: "Giulio Ciccone", countryCode: "IT", teamId: "lidl", role: "Climber" },
-  { id: "richard-carapaz", name: "Richard Carapaz", countryCode: "EC", teamId: "ef", role: "Climber" },
-  { id: "neilson-powless", name: "Neilson Powless", countryCode: "US", teamId: "ef", role: "Climber" },
-  { id: "toms-skujins", name: "Toms Skujins", countryCode: "LV", teamId: "lidl", role: "Allrounder" },
-  { id: "magnus-cort", name: "Magnus Cort", countryCode: "DK", teamId: "ef", role: "Allrounder" },
-
-  // giro riders
-  { id: "juan-ayuso", name: "Juan Ayuso", countryCode: "ES", teamId: "uae", role: "Leader" },
-  { id: "antonio-tiberi", name: "Antonio Tiberi", countryCode: "IT", teamId: "bora", role: "Leader" },
-  { id: "cian-uijtdebroeks", name: "Cian Uijtdebroeks", countryCode: "BE", teamId: "visma", role: "Climber" },
-  { id: "geraint-thomas", name: "Geraint Thomas", countryCode: "GB", teamId: "ineos", role: "Leader" },
-
-  // extra KOM riders
-  { id: "romain-bardet", name: "Romain Bardet", countryCode: "FR", teamId: "dsm", role: "Climber" },
-  { id: "davide-formolo", name: "Davide Formolo", countryCode: "IT", teamId: "uae", role: "Climber" },
-];
-
-// lookup
-export const RIDERS_BY_ID: Record<string, Rider> = Object.fromEntries(
-  RIDERS.map((r) => [r.id, r])
-);
-
-export function getRiderById(riderId: string): Rider | null {
-  return RIDERS_BY_ID[riderId] ?? null;
+export function getMockRider(riderId: number): PCSRiderResponse | null {
+  return MOCK_PCS_RIDERS[riderId] ?? null;
 }

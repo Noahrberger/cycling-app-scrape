@@ -1,9 +1,10 @@
+import { getTeam, type TeamView } from "@/services/teamsService";
 import {
   getUpcomingRacesForTeam,
   type UpcomingRace,
 } from "@/store/teamUpcomingRaces";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -18,29 +19,36 @@ export default function TeamDetailScreen() {
   }>();
 
   const [activeTab, setActiveTab] = useState<TeamTab>("riders");
+  const [team, setTeam] = useState<TeamView | null>(null);
 
   const title = useMemo(
     () => (teamName ?? teamId ?? "Team").toString(),
     [teamName, teamId]
   );
+
   const upcomingRaces = useMemo<UpcomingRace[]>(() => {
     return getUpcomingRacesForTeam(String(teamId ?? ""));
   }, [teamId]);
 
+  useEffect(() => {
+    async function loadTeam() {
+      const res = await getTeam(String(teamId ?? ""));
+      if (res.ok) setTeam(res.data);
+    }
+    loadTeam();
+  }, [teamId]);
+
   return (
     <SafeAreaView style={styles.screen}>
-      {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backText}>← Back</Text>
         </Pressable>
-
         <Text style={styles.teamName} numberOfLines={1}>
           {title}
         </Text>
       </View>
 
-      {/* Tabs */}
       <View style={styles.tabsWrap}>
         <TabButton
           label="Riders"
@@ -59,42 +67,28 @@ export default function TeamDetailScreen() {
         />
       </View>
 
-      {/* Content */}
       <View style={styles.content}>
         {activeTab === "riders" && (
           <>
             <Text style={styles.sectionTitle}>Riders</Text>
-
-            <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "/riders/[riderId]",
-                  params: {
-                    riderId: "jonas-vingegaard",
-                  },
-                })
-              }
-              style={{
-                marginTop: 12,
-                padding: 14,
-                borderRadius: 14,
-                backgroundColor: "#F2F2F2",
-              }}
-            >
-              <Text style={{ fontWeight: "900", color: "#111111" }}>
-                Jonas Vingegaard
-              </Text>
-              <Text style={{ marginTop: 4, color: "#666666" }}>
-                GC • Denmark
-              </Text>
-            </Pressable>
+            {!team ? (
+              <Text style={styles.note}>Loading...</Text>
+            ) : team.riders.length === 0 ? (
+              <Text style={styles.note}>No riders found.</Text>
+            ) : (
+              team.riders.map((rider) => (
+                <View key={rider.name} style={styles.riderCard}>
+                  <Text style={styles.riderName}>{rider.name}</Text>
+                  <Text style={styles.riderMeta}>{rider.countryCode}</Text>
+                </View>
+              ))
+            )}
           </>
         )}
 
         {activeTab === "upcoming" && (
           <>
             <Text style={styles.sectionTitle}>Upcoming races</Text>
-
             {upcomingRaces.length === 0 ? (
               <Text style={styles.note}>No upcoming races yet.</Text>
             ) : (
@@ -187,17 +181,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: "#F2F2F2",
   },
-  tabButtonActive: {
-    backgroundColor: "#111111",
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#111111",
-  },
-  tabTextActive: {
-    color: "#FFFFFF",
-  },
+  tabButtonActive: { backgroundColor: "#111111" },
+  tabText: { fontSize: 13, fontWeight: "700", color: "#111111" },
+  tabTextActive: { color: "#FFFFFF" },
 
   content: { paddingHorizontal: 16, paddingTop: 14 },
   sectionTitle: { fontSize: 16, fontWeight: "800", color: "#111111" },
@@ -209,13 +195,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "#F2F2F2",
   },
-  raceName: {
-    fontWeight: "900",
-    fontSize: 16,
-    color: "#111111",
+  raceName: { fontWeight: "900", fontSize: 16, color: "#111111" },
+  raceMeta: { marginTop: 4, color: "#666666" },
+
+  riderCard: {
+    marginTop: 10,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: "#F2F2F2",
   },
-  raceMeta: {
-    marginTop: 4,
-    color: "#666666",
-  },
+  riderName: { fontWeight: "900", color: "#111111" },
+  riderMeta: { marginTop: 4, color: "#666666" },
 });
