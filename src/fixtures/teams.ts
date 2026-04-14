@@ -6,48 +6,48 @@ export const MOCK_PCS_TEAMS: PCSTeamsResponse = {
       team: 1253, nation: "ae", name: "UAE Team Emirates - XRG",
       abbrev: "UAF", classification: "WT",
       url: "https://www.procyclingstats.com/team/uae-team-emirates-xrg-2026",
-      riders: [
-        { team: 1253, ridername: "POGAČAR Tadej", nation: "si", url: "" },
-        { team: 1253, ridername: "ALMEIDA João", nation: "pt", url: "" },
-        { team: 1253, ridername: "NARVÁEZ Jhonatan", nation: "ec", url: "" },
-      ],
+    riders: [
+  { team: 1253, rider_id: 194619, ridername: "POGAČAR Tadej", nation: "si", url: "" },
+  { team: 1253, rider_id: 196333, ridername: "ALMEIDA João", nation: "pt", url: "" },
+  { team: 1253, rider_id: 189438, ridername: "NARVÁEZ Jhonatan", nation: "ec", url: "" },
+],
     },
     {
       team: 1001, nation: "nl", name: "Visma - Lease a Bike",
       abbrev: "VLB", classification: "WT",
       url: "",
-      riders: [
-        { team: 1001, ridername: "VINGEGAARD Jonas", nation: "dk", url: "" },
-        { team: 1001, ridername: "VAN AERT Wout", nation: "be", url: "" },
-        { team: 1001, ridername: "LAPORTE Christophe", nation: "fr", url: "" },
-      ],
+riders: [
+  { team: 1001, rider_id: 196424, ridername: "VINGEGAARD Jonas", nation: "dk", url: "" },
+  { team: 1001, rider_id: 168961, ridername: "VAN AERT Wout", nation: "be", url: "" },
+  { team: 1001, rider_id: 172792, ridername: "LAPORTE Christophe", nation: "fr", url: "" },
+],
     },
     {
       team: 1328, nation: "be", name: "Soudal Quick-Step",
       abbrev: "SQS", classification: "WT",
       url: "",
-      riders: [
-        { team: 1328, ridername: "EVENEPOEL Remco", nation: "be", url: "" },
-        { team: 1328, ridername: "JAKOBSEN Fabio", nation: "nl", url: "" },
-      ],
+     riders: [
+  { team: 1328, rider_id: 212377, ridername: "EVENEPOEL Remco", nation: "be", url: "" },
+  { team: 1328, rider_id: 231768, ridername: "JAKOBSEN Fabio", nation: "nl", url: "" },
+],
     },
     {
       team: 1100, nation: "be", name: "Alpecin-Premier Tech",
       abbrev: "APT", classification: "WT",
       url: "",
-      riders: [
-        { team: 1100, ridername: "VAN DER POEL Mathieu", nation: "nl", url: "" },
-        { team: 1100, ridername: "PHILIPSEN Jasper", nation: "be", url: "" },
-      ],
+     riders: [
+  { team: 1100, rider_id: 168754, ridername: "VAN DER POEL Mathieu", nation: "nl", url: "" },
+  { team: 1100, rider_id: 193131, ridername: "PHILIPSEN Jasper", nation: "be", url: "" },
+],
     },
     {
       team: 1200, nation: "gb", name: "INEOS Grenadiers",
       abbrev: "IGD", classification: "WT",
       url: "",
-      riders: [
-        { team: 1200, ridername: "RODRIGUEZ Carlos", nation: "es", url: "" },
-        { team: 1200, ridername: "THOMAS Geraint", nation: "gb", url: "" },
-      ],
+    riders: [
+  { team: 1200, rider_id: 196333, ridername: "RODRIGUEZ Carlos", nation: "es", url: "" },
+  { team: 1200, rider_id: 187123, ridername: "THOMAS Geraint", nation: "gb", url: "" },
+],
     },
   ],
 };

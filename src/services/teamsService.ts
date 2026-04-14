@@ -4,6 +4,7 @@ import type { ServiceResult } from "@/types/service";
 export type TeamRiderView = {
   name: string;
   countryCode: string;
+  riderId?: string;
 };
 
 export type TeamView = {
@@ -41,6 +42,7 @@ export async function getTeams(): Promise<ServiceResult<TeamsListView>> {
     countryCode: team.nation.toUpperCase(),
     classification: team.classification,
     riders: team.riders.map((r) => ({
+      riderId: r.rider_id ? String(r.rider_id) : undefined,
       name: formatRiderName(r.ridername),
       countryCode: r.nation.toUpperCase(),
     })),
@@ -65,6 +67,7 @@ export async function getTeam(teamId: string): Promise<ServiceResult<TeamView>> 
       countryCode: raw.nation.toUpperCase(),
       classification: raw.classification,
       riders: raw.riders.map((r) => ({
+        riderId: r.rider_id ? String(r.rider_id) : undefined,
         name: formatRiderName(r.ridername),
         countryCode: r.nation.toUpperCase(),
       })),

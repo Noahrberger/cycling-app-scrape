@@ -169,12 +169,7 @@ export type PCSRiderResponse = {
   };
 };
 
-export type PCSTeamRider = {
-  team: number;
-  ridername: string;
-  nation: string;
-  url: string;
-};
+
 
 export type PCSTeam = {
   team: number;
@@ -188,4 +183,12 @@ export type PCSTeam = {
 
 export type PCSTeamsResponse = {
   data: PCSTeam[];
+};
+
+export type PCSTeamRider = {
+  team: number;
+  rider_id?: number;
+  ridername: string;
+  nation: string;
+  url: string;
 };

@@ -76,12 +76,23 @@ export default function TeamDetailScreen() {
             ) : team.riders.length === 0 ? (
               <Text style={styles.note}>No riders found.</Text>
             ) : (
-              team.riders.map((rider) => (
-                <View key={rider.name} style={styles.riderCard}>
-                  <Text style={styles.riderName}>{rider.name}</Text>
-                  <Text style={styles.riderMeta}>{rider.countryCode}</Text>
-                </View>
-              ))
+         team.riders.map((rider) => (
+  <Pressable
+    key={rider.name}
+    onPress={() => {
+      if (rider.riderId) {
+        router.push({
+          pathname: "/riders/[riderId]",
+          params: { riderId: rider.riderId },
+        });
+      }
+    }}
+    style={styles.riderCard}
+  >
+    <Text style={styles.riderName}>{rider.name}</Text>
+    <Text style={styles.riderMeta}>{rider.countryCode}</Text>
+  </Pressable>
+))
             )}
           </>
         )}
