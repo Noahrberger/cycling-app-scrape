@@ -171,7 +171,7 @@ const toggleTeam = useCallback((teamId: string) => {
         <View style={styles.ridersWrap}>
         {team.riders.map((r) => (
   <Pressable
-    key={r.id}
+    key={`${team.teamId}-${r.name}`}
     onPress={() =>
       router.push({
         pathname: "/riders/[riderId]",
