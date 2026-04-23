@@ -33,31 +33,31 @@ export default function ResultsScreen() {
   const [stageMenuOpen, setStageMenuOpen] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
+  let mounted = true;
 
-    async function loadResults() {
-      setLoading(true);
-      setError(null);
+  async function loadResults() {
+    setLoading(true);
+    setError(null);
 
-      const result = await getResults(id);
+    const result = await getResults(id, selectedStageNumber ?? undefined);
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      if (result.ok) {
-        setResultsData(result.data);
-      } else {
-        setError(result.error);
-      }
-
-      setLoading(false);
+    if (result.ok) {
+      setResultsData(result.data);
+    } else {
+      setError(result.error);
     }
 
-    loadResults();
+    setLoading(false);
+  }
 
-    return () => {
-      mounted = false;
-    };
-  }, [id]);
+  loadResults();
+
+  return () => {
+    mounted = false;
+  };
+}, [id, selectedStageNumber]);
 
   const categories: { key: ResultCategory; label: string; unit: ResultUnit }[] =
     [

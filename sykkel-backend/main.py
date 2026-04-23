@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from procyclingstats import Rider, RaceStartlist, Stage
+from procyclingstats import Rider, RaceStartlist, Stage, Race as PCSRace
 import cloudscraper
 from datetime import date
 
@@ -201,3 +201,61 @@ def get_results(race_slug: str):
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+        from procyclingstats import Race as PCSRace
+
+@app.get("/calendar/{race_slug:path}")
+def get_calendar(race_slug: str):
+    try:
+        url = f"https://www.procyclingstats.com/race/{race_slug}/stages"
+        html = scraper.get(url).text
+        race = PCSRace(f"race/{race_slug}/stages", html=html, update_html=False)
+        stages = race.stages()
+
+        mapped_stages = []
+        for i, s in enumerate(stages):
+            stage_name = s.get("stage_name") or f"Stage {i+1}"
+            distance = s.get("distance") or 0
+            date_raw = s.get("date") or ""
+
+            # Parse city_start og city_finish fra stagename
+            # Format: "Stage 1 | Achères - Carrières-sous-Poissy"
+            city_start = ""
+            city_finish = ""
+            if "|" in stage_name:
+                cities_part = stage_name.split("|", 1)[1].strip()
+                if " - " in cities_part:
+                    parts = cities_part.split(" - ", 1)
+                    city_start = parts[0].strip()
+                    city_finish = parts[1].strip()
+
+            # Legg til år hvis dato mangler år
+            if date_raw and len(date_raw) <= 5:
+                date_raw = f"2026-{date_raw.replace('.', '-')}"
+
+            mapped_stages.append({
+                "event_id": 0,
+                "race_date": date_raw,
+                "stagename": stage_name,
+                "city_start": city_start,
+                "city_finish": city_finish,
+                "distance": distance,
+                "start_time": "00:00:00",
+            })
+
+        return {
+            "data": [
+                {
+                    "event_id": 0,
+                    "date_start": mapped_stages[0]["race_date"] if mapped_stages else "",
+                    "date_end": mapped_stages[-1]["race_date"] if mapped_stages else "",
+                    "nation": "",
+                    "name": race_slug,
+                    "classification": "",
+                    "stages": mapped_stages,
+                }
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=str(e))
+        

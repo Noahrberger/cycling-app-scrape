@@ -1,17 +1,24 @@
+import { getPCSSlug } from "@/constants/raceSlugMap";
 import type { PCSResultsResponse } from "@/types/api";
 
-const RACE_ID_TO_SLUG: Record<string, string> = {
-  "tour-de-france": "tour-de-france/2026/stage-1",
-  "giro-ditalia": "giro-d-italia/2026/stage-1",
-  "paris-roubaix": "paris-roubaix/2026/result",
-};
-
 export async function getResultsRecord(
-  raceId: string
+  raceId: string,
+  stageNumber?: number
 ): Promise<PCSResultsResponse | null> {
   try {
-    const slug = RACE_ID_TO_SLUG[raceId] ?? raceId;
-    const res = await fetch(`http://192.168.0.63:8000/results/${slug}`);
+    const slug = getPCSSlug(raceId);
+    let res: Response;
+
+    if (stageNumber) {
+      res = await fetch(`http://192.168.0.63:8000/results/${slug}/2026/stage-${stageNumber}`);
+    } else {
+      // Prøv siste etappe via /result for endagsritt, ellers stage-1
+      res = await fetch(`http://192.168.0.63:8000/results/${slug}/2026/result`);
+      if (!res.ok) {
+        res = await fetch(`http://192.168.0.63:8000/results/${slug}/2026/stage-1`);
+      }
+    }
+
     if (!res.ok) return null;
     return res.json();
   } catch {

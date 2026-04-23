@@ -1,4 +1,4 @@
-import { getCalendarRecord, getEventIdForRace } from "@/repositories/calendarRepository";
+import { getCalendarRecord } from "@/repositories/calendarRepository";
 import { getResultsRecord } from "@/repositories/resultsRepository";
 import type { ResultCategory } from "@/types/api";
 import type { ServiceResult } from "@/types/service";
@@ -21,23 +21,20 @@ function isGap(time: string): boolean {
 }
 
 export async function getResults(
-  raceId: string
+  raceId: string,
+  stageNumber?: number
 ): Promise<ServiceResult<ResultsViewData>> {
 
   const [raw, calendar] = await Promise.all([
-    getResultsRecord(raceId),
-    getCalendarRecord(),
+    getResultsRecord(raceId, stageNumber),
+    getCalendarRecord(raceId),
   ]);
 
   if (!raw) {
     return { ok: false, error: "No results found" };
   }
 
-  // Hent stages for dette rittet fra calendar
-  const eventId = getEventIdForRace(raceId);
-  const calendarEvent = eventId
-    ? calendar.data.find((e) => e.event_id === eventId)
-    : null;
+  const calendarEvent = calendar.data[0] ?? null;
 
   const stageOptions = calendarEvent
     ? calendarEvent.stages.map((s, index) => ({
@@ -99,7 +96,8 @@ export async function getResults(
     categoryMap[category] = rows;
   }
 
-  resultsByStageAndCategory["latest"] = categoryMap;
+  const stageKey = stageNumber ? String(stageNumber) : "latest";
+  resultsByStageAndCategory[stageKey] = categoryMap;
 
   return {
     ok: true,

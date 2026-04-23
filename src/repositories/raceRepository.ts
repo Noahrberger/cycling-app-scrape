@@ -1,5 +1,5 @@
-import { getCalendarRecord, getEventIdForRace } from "@/repositories/calendarRepository";
-import { getRaceById } from "@/store/raceStore";
+import { getCalendarRecord } from "@/repositories/calendarRepository";
+import { getRaceById, getStagesForRace } from "@/store/raceStore";
 import type { PCSStage } from "@/types/api";
 import type { RaceDetails, Stage } from "@/types/models";
 
@@ -8,22 +8,20 @@ export function getRaceRecord(raceId: string): RaceDetails | null {
 }
 
 export async function getStageRecordsForRace(raceId: string): Promise<Stage[] | null> {
-  const race = getRaceById(raceId);
-  if (!race) return null;
-
-  // Prøv å hente stages fra PCS calendar-data
-  const eventId = getEventIdForRace(raceId);
-  if (eventId) {
-    const calendar = await getCalendarRecord();
-    const event = calendar.data.find((e) => e.event_id === eventId);
+  try {
+    const calendar = await getCalendarRecord(raceId);
+    const event = calendar.data[0] ?? null;
 
     if (event?.stages?.length) {
       return pcsStageToStage(event.stages);
     }
+  } catch {
+    // fallback under
   }
 
-  // Fallback til raceStore hvis ikke i calendar
-  const { getStagesForRace } = await import("@/store/raceStore");
+  // Fallback til raceStore
+  const race = getRaceById(raceId);
+  if (!race) return null;
   return getStagesForRace(race);
 }
 
